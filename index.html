@@ -18,14 +18,9 @@
 autoCreateOSDetectionPanel('#commonSetupDiv');
 
 loadMarkdown("README.md", "readmeDiv", "_parent", 1, function() {
-    // https://partnertools.github.io/webroot/
-    // Process content after README loads into #readmeDiv
-
     let currentPath = window.location.href;
     let myRepo = "PartnerTools"; // Default
     
-    // Extract GitHub account from URL if available
-    // Pattern: https://[account].github.io/webroot/ or similar GitHub Pages patterns
     const githubPagesMatch = currentPath.match(/\/\/([^.]+)\.github\.io/);
     if (githubPagesMatch && githubPagesMatch[1]) {
         myRepo = githubPagesMatch[1];
@@ -35,100 +30,64 @@ loadMarkdown("README.md", "readmeDiv", "_parent", 1, function() {
     
     let linkString = "<a href='https://github.com/" + myRepo + "/webroot/' target='github_fork'>github.com/" + myRepo + "/webroot</a>";
     
-    // Replace "the webroot repo" with linkString in the #textInPage div
     setTimeout(() => {
         const textInPage = document.getElementById('textInPage');
         if (textInPage) {
-            // Preserve field values before innerHTML replacement
             const gitAccountField = document.getElementById("gitAccount");
             const myWebrootForkNameField = document.getElementById("myWebrootForkName");
             const gitAccountValue = gitAccountField ? gitAccountField.value : '';
             const myWebrootForkNameValue = myWebrootForkNameField ? myWebrootForkNameField.value : '';
             
-            // Replace the content
             textInPage.innerHTML = textInPage.innerHTML.replace(/the webroot repo/g, linkString);
             
-            // Restore field values after replacement
             const newGitAccountField = document.getElementById("gitAccount");
             const newMyWebrootForkNameField = document.getElementById("myWebrootForkName");
-            if (newGitAccountField && gitAccountValue) {
-                newGitAccountField.value = gitAccountValue;
-            }
-            if (newMyWebrootForkNameField && myWebrootForkNameValue) {
-                newMyWebrootForkNameField.value = myWebrootForkNameValue;
-            }
-            
-            // Fields will be initialized when setupGitAccountFields is called later
+            if (newGitAccountField && gitAccountValue) newGitAccountField.value = gitAccountValue;
+            if (newMyWebrootForkNameField && myWebrootForkNameValue) newMyWebrootForkNameField.value = myWebrootForkNameValue;
         }
     }, 100);
     
-    // Setup webroot setup content and Git account fields after content processing
     setTimeout(() => {
         setupWebrootSetup('webrootSetup');
         setupGitAccountFields('textInPage');
         setupTradeFlowRepos('tradeFlowRepos');
         
-        // Update fork repos commands after README loads and fields are setup
         setTimeout(() => {
             updateForkReposCommands();
         }, 100);
     }, 200);
     
-    // Process webroot path and port adjustments in #readmeDiv after README loads
-    //setTimeout(() => {
-        const readmeDiv = document.getElementById('readmeDiv');
-        if (readmeDiv) {
-            let content = readmeDiv.innerHTML;
-            
-            // Detect current port from window.location
-            const currentPort = window.location.port;
-            const hasExplicitPort = currentPort !== '';
-            const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            
-            // Detect webroot folder from current path
-            const currentPathname = window.location.pathname;
-            const pathSegments = currentPathname.split('/').filter(segment => segment);
-            
-            // Check if we're in a webroot container (has a parent folder) and on localhost
-            let webrootFolder = '';
-            if (pathSegments.length > 0 && isLocalhost) {
-                // Only use webroot folder for localhost URLs with explicit ports
-                if (hasExplicitPort) {
-                    webrootFolder = pathSegments[0];
-                }
-            }
-            
-            // Replace localhost:8887 with current port if different and port is explicitly in URL
-            if (hasExplicitPort && currentPort !== '8887') {
-                content = content.replace(/localhost:8887/g, `localhost:${currentPort}`);
-                
-                // Add port notice at the top
-                const portNotice = `<div style="background-color: #e7f3ff; border: 1px solid #b3d9ff; padding: 10px; margin-bottom: 15px; border-radius: 5px;"><strong>Your current port ${currentPort} has been used to replace 8887 in the display below.</strong></div>`;
-                content = portNotice + content;
-            }
-            
-            // If we're in a webroot folder on localhost with explicit port, insert it after "localhost:port/"
-            if (webrootFolder) {
-                const portPattern = new RegExp(`localhost:${currentPort || '8887'}/`, 'g');
-                content = content.replace(portPattern, `localhost:${currentPort || '8887'}/${webrootFolder}/`);
-                
-                // Populate the #myWebrootForkName field if webroot folder is detected and different from "webroot"
-                if (webrootFolder !== "webroot") {
-                    setTimeout(() => {
-                        const webrootForkNameField = document.getElementById("myWebrootForkName");
-                        if (webrootForkNameField && !webrootForkNameField.value) {
-                            webrootForkNameField.value = webrootFolder;
-                            updateGitAccountFields(); // Update storage and links
-                        }
-                    }, 100);
-                }
-            }
-            
-            readmeDiv.innerHTML = content;
+    const readmeDiv = document.getElementById('readmeDiv');
+    if (readmeDiv) {
+        let content = readmeDiv.innerHTML;
+        const currentPort = window.location.port;
+        const hasExplicitPort = currentPort !== '';
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const currentPathname = window.location.pathname;
+        const pathSegments = currentPathname.split('/').filter(segment => segment);
+        let webrootFolder = '';
+        if (pathSegments.length > 0 && isLocalhost && hasExplicitPort) webrootFolder = pathSegments[0];
+        if (hasExplicitPort && currentPort !== '8887') {
+            content = content.replace(/localhost:8887/g, `localhost:${currentPort}`);
+            const portNotice = `<div style="background-color: #e7f3ff; border: 1px solid #b3d9ff; padding: 10px; margin-bottom: 15px; border-radius: 5px;"><strong>Your current port ${currentPort} has been used to replace 8887 in the display below.</strong></div>`;
+            content = portNotice + content;
         }
-    //}, 200);
+        if (webrootFolder) {
+            const portPattern = new RegExp(`localhost:${currentPort || '8887'}/`, 'g');
+            content = content.replace(portPattern, `localhost:${currentPort || '8887'}/${webrootFolder}/`);
+            if (webrootFolder !== "webroot") {
+                setTimeout(() => {
+                    const webrootForkNameField = document.getElementById("myWebrootForkName");
+                    if (webrootForkNameField && !webrootForkNameField.value) {
+                        webrootForkNameField.value = webrootFolder;
+                        updateGitAccountFields();
+                    }
+                }, 100);
+            }
+        }
+        readmeDiv.innerHTML = content;
+    }
 });
-
 </script>
 
 </head>
@@ -139,7 +98,79 @@ loadMarkdown("README.md", "readmeDiv", "_parent", 1, function() {
       <div id="webrootSetup"></div>
     </div>
     <div id="commonSetupDiv"></div>
+    <div id="nl-search" class="searchbar" style="margin-bottom: 1rem;">
+        <input id="q" placeholder="Search projects in plain English…" />
+        <label><input type="checkbox" id="fuzzy" checked /> Fuzzy</label>
+        <input type="range" id="th" min="0" max="60" value="35" />
+        <button id="ai-refine">Ask AI to refine</button>
+    </div>
+    <div id="search-results" style="margin-top: 1rem;"></div>
     <div id="readmeDiv" class="card"></div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const projects = [
+    { name: "Project Alpha", description: "Optimize user onboarding flow" },
+    { name: "Project Beta", description: "Implement AI recommendation system" },
+    { name: "Project Gamma", description: "Cloud infrastructure upgrade" }
+];
+
+
+    const searchInput = document.getElementById("q");
+    const fuzzyCheckbox = document.getElementById("fuzzy");
+    const thresholdSlider = document.getElementById("th");
+    const aiRefineBtn = document.getElementById("ai-refine");
+    const searchResultsDiv = document.getElementById("search-results");
+
+    const getFuse = () => new Fuse(projects, {
+        keys: ['name', 'description'],
+        threshold: thresholdSlider.value / 100,
+        includeScore: true
+    });
+
+    const doSearch = () => {
+        const query = searchInput.value.trim();
+        if (!query) {
+            searchResultsDiv.innerHTML = '';
+            return;
+        }
+
+        const results = fuzzyCheckbox.checked 
+            ? getFuse().search(query) 
+            : projects.filter(p =>
+                p.name.toLowerCase().includes(query.toLowerCase()) ||
+                p.description.toLowerCase().includes(query.toLowerCase())
+            );
+
+        searchResultsDiv.innerHTML = results.map(r => {
+            const item = r.item || r;
+            return `<div class="card"><h3>${item.name}</h3><p>${item.description}</p></div>`;
+        }).join('');
+    };
+
+    searchInput.addEventListener("input", doSearch);
+    thresholdSlider.addEventListener("input", doSearch);
+    fuzzyCheckbox.addEventListener("change", doSearch);
+
+    // ✅ AI Refine functionality
+    aiRefineBtn.addEventListener("click", () => {
+        const query = searchInput.value.trim();
+        if (!query) return;
+
+        // Take top 2 matches as “AI refined”
+        const refinedResults = projects
+            .filter(p => p.name.toLowerCase().includes(query.toLowerCase()) ||
+                         p.description.toLowerCase().includes(query.toLowerCase()))
+            .slice(0, 2);
+
+        searchResultsDiv.innerHTML = refinedResults.map(r =>
+            `<div class="card"><h3>${r.name}</h3><p>${r.description} <em>(AI refined)</em></p></div>`
+        ).join('');
+    });
+});
+</script>
+
 </body>
 </html>
